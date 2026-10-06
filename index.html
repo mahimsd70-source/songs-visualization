@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SONGS VISUALIZATION - FULL CONTROLS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.min.js"></script>
+</head>
+<body class="bg-black text-white p-2">
+
+<div id="normalView">
+<div class="bg-zinc-900 p-3 rounded-xl flex justify-between mb-3 max-w-7xl mx-auto">
+<h1 class="font-black text-yellow-400 text-sm">SONGS VISUALIZATION - FULL CONTROLS</h1>
+<button onclick="exportPPT()" class="bg-zinc-800 px-4 py-1 rounded-full text-xs">Export PPT</button>
+</div>
+
+<div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-3">
+<div class="bg-zinc-900 p-3 rounded-xl space-y-4">
+
+<div>
+<label class="text-xs font-bold">Font Size: <span id="fv" class="bg-yellow-400 text-black px-2 rounded">52</span></label>
+<input type="range" id="fs" min="0" max="60" value="52" class="w-full accent-yellow-400 mt-1" oninput="updateAll()">
+<p class="text-[10px] text-white/40">0-60 range</p>
+</div>
+
+<div class="flex justify-between items-center bg-black p-2 rounded">
+<span class="text-xs font-bold">BOLD</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input type="checkbox" id="boldCheck" checked class="sr-only peer" onchange="updateAll()">
+<div class="w-11 h-6 bg-zinc-700 rounded-full peer peer-checked:bg-yellow-400 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+</label>
+</div>
+
+<div>
+<label class="text-xs font-bold">Line Gap: <span id="gapVal" class="bg-yellow-400 text-black px-2 rounded">1.4</span></label>
+<input type="range" id="gap" min="0.8" max="3" step="0.1" value="1.4" class="w-full accent-yellow-400 mt-1" oninput="updateAll()">
+<p class="text-[10px] text-white/40">Line spacing control</p>
+</div>
+
+<div class="grid grid-cols-2 gap-2">
+<button onclick="group(2)" id="g2" class="bg-zinc-800 p-2 rounded text-xs font-bold">2=1</button>
+<button onclick="group(4)" id="g4" class="bg-zinc-800 p-2 rounded text-xs font-bold">4=1</button>
+<button onclick="group(6)" id="g6" class="bg-yellow-400 text-black p-2 rounded text-xs font-bold">6=3+3</button>
+<button onclick="group(8)" id="g8" class="bg-zinc-800 p-2 rounded text-xs font-bold">8=4+4</button>
+</div>
+
+<div class="border-t border-white/10 pt-3">
+<p class="text-xs font-bold text-yellow-400">ADD SONG</p>
+<textarea id="songInput" rows="4" class="w-full bg-black border border-white/30 rounded p-2 mt-2 text-sm" placeholder="Paste lyrics - blank line = new slide"></textarea>
+<button onclick="addSong()" class="w-full bg-yellow-400 text-black py-2 rounded font-bold mt-2 text-sm">+ ADD SONG</button>
+<p id="status" class="text-xs text-green-400 mt-1"></p>
+</div>
+</div>
+
+<div class="lg:col-span-2 space-y-3">
+<div class="bg-zinc-900 p-2 rounded flex justify-between text-xs"><span>Slide <span id="cnum">1</span>/<span id="tnum">6</span> | Bold: <span id="boldStatus">ON</span> | Gap: <span id="gapStatus">1.4</span></span><span>Total: <span id="totalCount">6</span></span></div>
+<div id="mainBox" class="bg-black rounded-xl aspect-video flex items-center justify-center p-8 text-center border border-white/20"><div id="mainText" class="text-4xl font-black"></div></div>
+<div id="thumbs" class="grid grid-cols-5 gap-2"></div>
+<div class="bg-zinc-900 p-3 rounded-xl">
+<button onclick="startDual()" class="w-full bg-yellow-400 text-black py-3 rounded font-bold text-sm">🔴 START DUAL PROJECTION</button>
+<p class="text-[10px] text-white/50 mt-2 text-center">Main PC = ALL slides (active+unactive) | Projector = ONE slide only with Bold+Gap</p>
+</div>
+</div>
+</div>
+</div>
+
+<div id="presenterView" class="hidden h-screen">
+<div class="bg-zinc-900 p-2 flex justify-between items-center text-xs">
+<span class="font-bold text-yellow-400">PRESENTER VIEW - All Slides Visible | Bold: <span id="pBold">ON</span> | Gap: <span id="pGap">1.4</span> | Font: <span id="pFont">52</span></span>
+<button onclick="stopDual()" class="bg-red-600 px-4 py-1 rounded font-bold">STOP</button>
+</div>
+<div class="grid grid-cols-12 gap-3 p-3 h-[calc(100vh-50px)]">
+<div class="col-span-4 bg-zinc-900 rounded-xl p-3 overflow-y-auto">
+<h3 class="font-bold text-xs mb-2">📋 ALL SLIDES - Active + Unactive (Click to project)</h3>
+<div class="flex gap-2 mb-3 text-[10px]">
+<div class="flex items-center gap-1"><div class="w-3 h-3 bg-yellow-400 rounded"></div> Live on projector</div>
+<div class="flex items-center gap-1"><div class="w-3 h-3 bg-zinc-700 rounded"></div> Unactive</div>
+</div>
+<div id="allSlidesList" class="space-y-2"></div>
+</div>
+<div class="col-span-5 space-y-3">
+<div class="bg-zinc-900 rounded-xl p-3">
+<div class="flex justify-between text-xs"><span>NOW LIVE ON PROJECTOR:</span><span id="liveNum" class="text-yellow-400 font-bold">1/6</span></div>
+<div id="livePreview" class="bg-black rounded-xl aspect-video flex items-center justify-center p-6 text-center font-black mt-2 border-2 border-yellow-400"></div>
+</div>
+<div class="bg-zinc-900 rounded-xl p-3">
+<div class="text-[10px] text-white/60">NEXT:</div>
+<div id="nextPreview" class="bg-zinc-800 rounded p-3 text-center font-bold mt-2 min-h-[60px] flex items-center justify-center opacity-70 text-sm"></div>
+<div class="grid grid-cols-2 gap-2 mt-3">
+<button onclick="prevSlide()" class="bg-zinc-700 py-2 rounded font-bold text-sm">← PREV</button>
+<button onclick="nextSlide()" class="bg-yellow-400 text-black py-2 rounded font-bold text-sm">NEXT →</button>
+</div>
+</div>
+</div>
+<div class="col-span-3 bg-zinc-900 rounded-xl p-3 overflow-y-auto">
+<h3 class="font-bold text-xs mb-2">👁️ Unactive Slides Only</h3>
+<div id="unactiveList" class="space-y-2"></div>
+<div class="mt-3">
+<label class="text-[10px]">Adjust Bold/Gap Live:</label>
+<div class="mt-2">
+<div class="flex justify-between text-[10px]"><span>Bold</span><input type="checkbox" id="pBoldCheck" checked onchange="syncBold()"></div>
+<div class="mt-2"><span class="text-[10px]">Gap: <span id="pGapVal">1.4</span></span><input type="range" id="pGapRange" min="0.8" max="3" step="0.1" value="1.4" class="w-full accent-yellow-400" oninput="syncGap()"></div>
+<div class="mt-2"><span class="text-[10px]">Font: <span id="pFontVal">52</span></span><input type="range" id="pFontRange" min="0" max="60" value="52" class="w-full accent-yellow-400" oninput="syncFont()"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+let defaults=[
+{title:"பல்லவி",content:"அகமகிழ்ந்தடி பணிவோமே\nதேவ பாலனை"},
+{title:"அனுபல்லவி",content:"தாவீதின் ஊரதில்\nஜோதியாய்"},
+{title:"சரணம் 1",content:"ஆனந்தம் பாடி\nஆர்ப்பரிப்போமின்று"},
+{title:"சரணம் 2",content:"தேவதிரு சுதன்\nஇயேசு நமக்காய்"},
+{title:"சரணம் 3",content:"பூவுலகோருக்கு\nபுண்ணியனிவரே"},
+{title:"சரணம் 4",content:"6. இயேசுவின் இரத்தத்தால்\nஇதயத்தைக் கழுவி\nநேசரி னாவியா\nலொருமிக்கச் செய்யும் -\nஆவி"}
+];
+let slides=JSON.parse(JSON.stringify(defaults));
+let cur=0;
+let projWin=null;
+
+function getSettings(){
+return {
+font:parseInt(document.getElementById('fs').value)||52,
+bold:document.getElementById('boldCheck').checked,
+gap:parseFloat(document.getElementById('gap').value)||1.4
+};
+}
+
+function updateAll(){
+let s=getSettings();
+document.getElementById('fv').innerText=s.font;
+document.getElementById('gapVal').innerText=s.gap;
+document.getElementById('boldStatus').innerText=s.bold?'ON':'OFF';
+document.getElementById('gapStatus').innerText=s.gap;
+document.getElementById('pBold').innerText=s.bold?'ON':'OFF';
+document.getElementById('pGap').innerText=s.gap;
+document.getElementById('pFont').innerText=s.font;
+
+let mt=document.getElementById('mainText');
+mt.style.fontSize=s.font*0.9+'px';
+mt.style.fontWeight=s.bold?'900':'400';
+mt.style.lineHeight=s.gap;
+
+render();
+if(projWin &&!projWin.closed) updateProj();
+
+// sync presenter controls
+let pb=document.getElementById('pBoldCheck'); if(pb) pb.checked=s.bold;
+let pg=document.getElementById('pGapRange'); if(pg) pg.value=s.gap;
+let pf=document.getElementById('pFontRange'); if(pf) pf.value=s.font;
+let pgv=document.getElementById('pGapVal'); if(pgv) pgv.innerText=s.gap;
+let pfv=document.getElementById('pFontVal'); if(pfv) pfv.innerText=s.font;
+}
+
+function syncBold(){
+document.getElementById('boldCheck').checked=document.getElementById('pBoldCheck').checked;
+updateAll();
+}
+function syncGap(){
+document.getElementById('gap').value=document.getElementById('pGapRange').value;
+updateAll();
+}
+function syncFont(){
+document.getElementById('fs').value=document.getElementById('pFontRange').value;
+updateAll();
+}
+
+function render(){
+let h='';
+for(let i=0;i<slides.length;i++){
+let b=i==cur?'border-yellow-400 bg-zinc-800':'border-white/10 bg-zinc-900';
+h+='<div onclick="cur='+i+';render();updateProj()" class="border-2 '+b+' p-2 rounded cursor-pointer"><div class="text-xs font-bold">'+(i+1)+'. '+slides[i].title.substring(0,15)+'</div><div class="text-[10px] mt-1">'+slides[i].content.substring(0,28)+'</div></div>';
+}
+document.getElementById('thumbs').innerHTML=h;
+document.getElementById('cnum').innerText=cur+1;
+document.getElementById('tnum').innerText=slides.length;
+document.getElementById('totalCount').innerText=slides.length;
+let s=getSettings();
+let mt=document.getElementById('mainText');
+mt.innerHTML=slides[cur].content.replace(/\n/g,'<br>');
+mt.style.fontSize=s.font*0.9+'px';
+mt.style.fontWeight=s.bold?'900':'400';
+mt.style.lineHeight=s.gap;
+renderPresenter();
+}
+
+function renderPresenter(){
+let all='';
+for(let i=0;i<slides.length;i++){
+let cls=i==cur?'bg-yellow-400 text-black border-yellow-400':'bg-zinc-800 border-white/10 text-white';
+all+='<div onclick="cur='+i+';renderPresenter();updateProj()" class="border-2 p-2 rounded cursor-pointer '+cls+'"><div class="flex justify-between"><span class="text-xs font-bold">'+(i+1)+'. '+slides[i].title+'</span><span class="text-[10px]">'+(i==cur?'● LIVE':'○')+'</span></div><div class="text-[11px] mt-1">'+slides[i].content.substring(0,45)+'</div></div>';
+}
+document.getElementById('allSlidesList').innerHTML=all;
+
+let un='';
+for(let i=0;i<slides.length;i++){
+if(i!=cur){
+un+='<div onclick="cur='+i+';renderPresenter();updateProj()" class="bg-zinc-800 border border-white/10 p-2 rounded cursor-pointer hover:bg-zinc-700"><div class="text-[11px] font-bold">'+(i+1)+'. '+slides[i].title+'</div><div class="text-[10px] text-white/60 mt-1">'+slides[i].content.substring(0,30)+'</div></div>';
+}
+}
+document.getElementById('unactiveList').innerHTML=un||'<div class="text-xs text-white/40">All slides active</div>';
+
+let s=getSettings();
+let live=document.getElementById('livePreview');
+live.innerHTML=slides[cur].content.replace(/\n/g,'<br>');
+live.style.fontSize=s.font*0.8+'px';
+live.style.fontWeight=s.bold?'900':'400';
+live.style.lineHeight=s.gap;
+
+let nxt=slides[cur+1];
+document.getElementById('nextPreview').innerHTML=nxt?nxt.content.replace(/\n/g,'<br>'):'END';
+document.getElementById('nextPreview').style.fontWeight=s.bold?'900':'400';
+document.getElementById('nextPreview').style.lineHeight=s.gap;
+document.getElementById('liveNum').innerText=(cur+1)+'/'+slides.length;
+}
+
+function addSong(){
+let txt=document.getElementById('songInput').value.trim();
+if(!txt){alert('Type song');return;}
+let parts=txt.split('\n\n');let added=0;
+for(let p of parts){if(p.trim()){slides.push({title:p.split('\n')[0].substring(0,20),content:p.trim()});added++;}}
+document.getElementById('songInput').value='';
+document.getElementById('status').innerText='✅ Added '+added;
+cur=slides.length-added;render();
+setTimeout(()=>document.getElementById('status').innerText='',3000);
+}
+
+function group(n){
+document.querySelectorAll('[id^=g]').forEach(e=>e.className='bg-zinc-800 p-2 rounded text-xs font-bold');
+document.getElementById('g'+n).className='bg-yellow-400 text-black p-2 rounded text-xs font-bold';
+let sara=slides.filter(s=>s.title.includes('சரணம்'));
+let oth=slides.filter(s=>!s.title.includes('சரணம்'));
+if(n==2||n==4){let c=sara.map(s=>s.content).join('\n\n');if(c) slides=[...oth.slice(0,1),{title:'Combined',content:c}];}
+if(n==6){let a=sara.slice(0,3).map(s=>s.content).join('\n\n');let b=sara.slice(3,6).map(s=>s.content).join('\n\n');slides=[];if(a) slides.push({title:'1-3',content:a});if(b) slides.push({title:'4-6',content:b});}
+if(n==8){let a=sara.slice(0,4).map(s=>s.content).join('\n\n');let b=sara.slice(4,8).map(s=>s.content).join('\n\n');slides=[];if(a) slides.push({title:'1-4',content:a});if(b) slides.push({title:'5-8',content:b});}
+cur=0;render();
+}
+
+function startDual(){
+projWin=window.open('','','width=1280,height=720');
+if(!projWin){alert('Popup blocked! Allow popup');return;}
+projWin.document.write('<html><head><title>PROJECTOR</title></head><body style="margin:0;background:black;color:white;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;"><div id="p" style="white-space:pre-wrap;padding:40px;"></div></body></html>');
+document.getElementById('normalView').classList.add('hidden');
+document.getElementById('presenterView').classList.remove('hidden');
+renderPresenter();
+updateProj();
+}
+
+function updateProj(){
+if(!projWin || projWin.closed) return;
+let s=getSettings();
+let e=projWin.document.getElementById('p');
+if(e){
+e.innerHTML=slides[cur].content.replace(/\n/g,'<br>');
+e.style.fontSize=s.font*1.6+'px';
+e.style.fontWeight=s.bold?'900':'400';
+e.style.lineHeight=s.gap;
+}
+}
+
+function stopDual(){if(projWin) projWin.close();document.getElementById('normalView').classList.remove('hidden');document.getElementById('presenterView').classList.add('hidden');}
+function nextSlide(){if(cur<slides.length-1){cur++;renderPresenter();updateProj();}}
+function prevSlide(){if(cur>0){cur--;renderPresenter();updateProj();}}
+document.addEventListener('keydown',e=>{if(projWin&&!projWin.closed){if(e.key=='ArrowRight'||e.code=='Space'){e.preventDefault();nextSlide();}if(e.key=='ArrowLeft'){prevSlide();}if(e.key=='Escape'){stopDual();}}});
+function exportPPT(){
+let pptx=new PptxGenJS();pptx.layout='LAYOUT_WIDE';
+let s=getSettings();
+for(let sl of slides){let slide=pptx.addSlide();slide.background={fill:'000000'};slide.addText(sl.content,{x:0.5,y:1,w:12,h:5,fontSize:s.font,bold:s.bold,color:'ffffff',align:'center'});}
+pptx.writeFile({fileName:'Songs.pptx'});
+}
+render();updateAll();
+</script>
+</body>
+</html>
